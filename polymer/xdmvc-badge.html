@@ -7,20 +7,17 @@
 <dom-module id="xdmvc-badge">
     <template>
         <style>
-
+            :host {
+                display: block;
+                height: 75px;
+                width: 75px;
+            }
             paper-icon-button {
                 background-color: #ddd;
                 padding: 3px;
                 border-radius: 3px;
-                margin-left: 10px;
-                margin-right: 10px;
-                float: right;
-            }
-
-            paper-badge {
-                margin-left: 10px;
-                margin-top: 15px;
-                float: right;
+                margin: 12px;
+                margin-top: 17px;
             }
 
         </style>
@@ -44,7 +41,7 @@
         },
 
         updatePosition: function() {
-            this.$.badge.updatePosition();
+           this.$.badge.updatePosition();
         }
 
     });

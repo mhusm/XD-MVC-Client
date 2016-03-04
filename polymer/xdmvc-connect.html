@@ -5,6 +5,13 @@
 
 <dom-module id="xdmvc-connect">
     <template>
+        <style>
+            :host {
+                display: block;
+                padding: 7px;
+
+            }
+        </style>
         <xdmvc-badge id="badge" on-click="toggleQR" connections="[[connections]]"></xdmvc-badge>
         <div hidden$="{{!showQR}}">
             <xdmvc-qr url="[[url]]"></xdmvc-qr>
@@ -38,9 +45,9 @@
         },
 
         attached: function(){
-            this.async(function() {
-                this.$$('xdmvc-connection');
-            }.bind(this));
+            this.async(function(){
+                this.$.badge.updatePosition();
+            }, 50);
         }
     });
 </script>

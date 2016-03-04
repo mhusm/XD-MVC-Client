@@ -1,5 +1,5 @@
 {
-  "name": "XD-MVC Client",
+  "name": "xdmvcclient",
   "version": "0.1.0",
   "license": "GPL-3.0",
   "main": "js/xdmvc.js",
@@ -16,6 +16,9 @@
     "ua-parser-js" : "~0.7.7",
     "observe-js": "~0.5.6",
     "socket.io-client": ">=1.3.5",
+    "iron-icons": "PolymerElements/iron-icons#~1.0.4",
+    "paper-badge": "PolymerElements/paper-badge#~1.0.4",
+    "qr-code": "webcomponent-qr-code#~0.1.8",
     "detectrtc": ""
   }
 }

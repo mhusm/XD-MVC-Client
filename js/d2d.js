@@ -294,6 +294,7 @@ XDd2d.prototype.connectTo = function connectTo (deviceId) {
                         internalConnect(device);
                     } else {
                         console.warn("Could not connect. Device is not available. Device ID: " +deviceId);
+                        this.emit('XDunavailable', deviceId);
                     }
                 }.bind(this)
             );

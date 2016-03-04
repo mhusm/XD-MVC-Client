@@ -47,13 +47,14 @@
                 this.onServerReady();
             } else { // not yet connected to server, wait for the connection event
                 XDmvc.XDd2d.on("XDserverReady", this.onServerReady.bind(this));
+                XDmvc.XDd2d.on("XDunavailable", this.onDeviceUnavailable.bind(this));
             }
         },
         onServerReady: function(){
             var connect = getQueryParams(window.location.search).connect;
             if (!connect){
                 var connectString = 'connect='+XDmvc.deviceId;
-                window.history.pushState('', '', window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString);
+                window.history.pushState('', '', (window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString) +window.location.hash);
                 if (this.connectee) {
                     XDmvc.addRole(this.connectee);
                 }
@@ -70,7 +71,22 @@
                 }
             }
             this.url = window.location.toString();
+        },
+
+        /* The device we wanted to connect to is unvavailable.
+           The url of the current device is now updated so that other devices can connect to this one.
+           This is also helpful to handle reloads when device IDs are not persisted.
+         */
+        onDeviceUnavailable: function(device) {
+            var connect = getQueryParams(window.location.search).connect;
+            var newsearch = window.location.search.replace("connect="+connect, "");
+            window.history.pushState('', '', newsearch +window.location.hash);
+            if (this.connector) {
+                XDmvc.removeRole(this.connector);
+            }
+            this.onServerReady();
         }
+
 
     });
 </script>

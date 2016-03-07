@@ -54,7 +54,9 @@
             var connect = getQueryParams(window.location.search).connect;
             if (!connect){
                 var connectString = 'connect='+XDmvc.deviceId;
+                // Fire event to work with iron-page-url
                 window.history.pushState('', '', (window.location.search.length > 0? window.location.search +"&" +connectString : '?'+connectString) +window.location.hash);
+                this.fire('location-changed', {}, {node: window});
                 if (this.connectee) {
                     XDmvc.addRole(this.connectee);
                 }
@@ -80,7 +82,9 @@
         onDeviceUnavailable: function(device) {
             var connect = getQueryParams(window.location.search).connect;
             var newsearch = window.location.search.replace("connect="+connect, "");
+            // Fire event to work with iron-page-url
             window.history.pushState('', '', newsearch +window.location.hash);
+            this.fire('location-changed', {}, {node: window});
             if (this.connector) {
                 XDmvc.removeRole(this.connector);
             }

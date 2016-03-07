@@ -596,11 +596,14 @@ XDMVC.prototype.detectDevice = function(){
      see http://www.quirksmode.org/blog/archives/2012/07/more_about_devi.html
      */
 
-    var MAX_SMALL_DIAM = 500;
-    var MAX_MEDIUM_DIAM = 1150;
-    var MAX_LARGE_DIAM = 1800;
+    var MAX_SMALL_DIAM = 900;
+    var MAX_MEDIUM_DIAM = 1500;
+    var MAX_LARGE_DIAM = 2300;
 
-    var parser = new UAParser();
+
+    // According to Nicola, the previous implementation was incorrect which was confirmed by tests.
+ //   var parser = new UAParser();
+    /*
     var scale = 1;
     var pixelRatio;
     if (parser.getOS() !== 'Mac OS' && parser.getOS() !== 'iOS'){
@@ -608,10 +611,13 @@ XDMVC.prototype.detectDevice = function(){
             window.screen.deviceXDPI / window.screen.logicalXDPI;
         scale = pixelRatio;
     }
-
     var width = window.innerWidth / scale;
     var height = window.innerHeight / scale;
+     */
 
+
+    var width = window.innerWidth;
+    var height = window.innerHeight;
     var diameter = Math.sqrt(width*width + height*height);
 
     this.device.width = width;

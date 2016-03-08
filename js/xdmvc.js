@@ -446,6 +446,7 @@ XDMVC.prototype.addRole = function (role) {
     if (!this.hasRole(role)) {
         this.roles.push(role);
         this.sendRoles();
+        this.emit("XDroleAdded", role);
         Platform.performMicrotaskCheckpoint();
     }
 };
@@ -454,6 +455,7 @@ XDMVC.prototype.removeRole = function (role) {
     var index = this.roles.indexOf(role);
     if (index > -1) {
         this.roles.splice(index, 1);
+        this.emit("XDroleRemoved", role);
         this.sendRoles();
         Platform.performMicrotaskCheckpoint();
     }

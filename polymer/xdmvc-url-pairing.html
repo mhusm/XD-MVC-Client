@@ -88,8 +88,10 @@
             if (this.connector) {
                 XDmvc.removeRole(this.connector);
             }
+            this.url = window.location.toString();
             this.onServerReady();
         }
+
 
 
     });

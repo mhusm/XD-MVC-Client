@@ -85,12 +85,15 @@
 
         selectNext: function () {
             this.set("pages.current.index", this.pages.current.index +1);
+            Platform.performMicrotaskCheckpoint();
         },
         selectPrevious: function () {
             this.set("pages.current.index", Math.max(0, this.pages.current.index -1));
+            Platform.performMicrotaskCheckpoint();
         },
         select: function(index) {
             this.set("pages.current.index", index);
+            Platform.performMicrotaskCheckpoint();
         }
 
 

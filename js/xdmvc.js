@@ -141,7 +141,7 @@ XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
     newInterest.forEach(function(dataId){
         if (oldInterests.indexOf(dataId) === -1) {
             sender.send('sync', { data: this.syncData[dataId].data, id: dataId });
-            this.updateDevice(sender, dataId);
+            this.updateDevice(sender, dataId, this.syncData[dataId].data);
         }
     }, this);
     Platform.performMicrotaskCheckpoint();
@@ -183,7 +183,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
         this.getConnectedDevices().filter(function(device){
             return device !== sender;
         }).forEach(function(device){
-            this.updateDevice(device, msg.id);
+            this.updateDevice(device, msg.id, sender.latestData[msg.id]);
         }, this);
     } else {
         sender.initial[msg.id] = false;
@@ -191,13 +191,13 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
 
 };
 
-XDMVC.prototype.updateDevice = function(device, dataId){
+XDMVC.prototype.updateDevice = function(device, dataId, newdata){
     var summary;
     if (this.doesMerge(device, dataId)) {
         if (!device.latestData[dataId]) {
             device.latestData[dataId] = Array.isArray(this.syncData[dataId].data)? [] : {} ;
         }
-        summary = this.update(device.latestData[dataId], this.syncData[dataId].data);
+        summary = this.update(device.latestData[dataId], newdata);
         this.emit('XDdeviceUpdated', {dataId: dataId, summary: summary, sender: device.id});
     }
     return summary;
@@ -319,7 +319,7 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
 
     // If other devices implement the default merge behaviour, we proactively update their latest data to the same value
     this.getConnectedDevices().forEach(function(device){
-        this.updateDevice(device, id);
+        this.updateDevice(device, id, this.syncData[id].data);
     }, this);
 
 };

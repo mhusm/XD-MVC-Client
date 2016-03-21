@@ -1,0 +1,65 @@
+<!--
+/*
+* XD-MVC -- A framework for cross-device applications
+* Copyright (C) 2014-2015 Maria Husmann. All rights reserved.
+*
+* XD-MVC is free software: you can redistribute it and/or modify
+* it under the terms of the GNU General Public License as published by
+* the Free Software Foundation, either version 3 of the License, or
+* (at your option) any later version.
+*
+* XD-MVC is distributed in the hope that it will be useful,
+* but WITHOUT ANY WARRANTY; without even the implied warranty of
+* MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+* GNU General Public License for more details.
+*
+* You should have received a copy of the GNU General Public License
+* along with XD-MVC. If not, see <http://www.gnu.org/licenses/>.
+*
+* See the README and LICENSE files for further information.
+*
+*/
+-->
+
+<link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../observe-js/observe-js.html">
+<link rel="import" href="xdmvc.html">
+
+<script>
+    Polymer({
+        is: "xdmvc-role",
+
+        properties: {
+            name:{
+                type: String
+            },
+            config: {
+                type: Array
+            }
+        },
+
+        ready: function() {
+            var parent = Polymer.dom(this).parentNode.host;
+            var configurations = [];
+            this.config.forEach(function(c){
+                if (typeof c == 'string' || c instanceof String) {
+                    configurations.push(c);
+                } else {
+                    var keys  = Object.keys(c);
+                    var callb =parent[c[keys[0]]]; // Find function in parent element
+                    if (callb) {
+                        callb = callb.bind(parent);
+                    }
+                    c[keys[0]] =callb;
+                    configurations.push(c);
+                    console.log(callb);
+                }
+            }, this);
+
+            XDmvc.configureRole(this.name, configurations);
+        }
+
+
+
+    });
+</script>

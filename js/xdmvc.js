@@ -150,7 +150,7 @@ XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
 
 XDMVC.prototype.handleSync = function handleSync (data, sender){
     var msg = data;
-    var data;
+    var summary;
 
     if (!sender.latestData[msg.id])  {
         sender.latestData[msg.id] = msg.data;
@@ -163,25 +163,27 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
 
         // Default merge behaviour, if nothing else is specified
         if (callbacks.length === 0 && !this.syncData[msg.id].callback) {
-            data = this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
-            sender.latestData[msg.id] = data;
+            summary = this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
+            sender.latestData[msg.id] = this.syncData[msg.id].data;
         } else {
             // If specified, role specific callbacks
-            data = this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
+            summary = this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
             if (callbacks.length > 0) {
                 callbacks.forEach(function(callback){
-                    callback(msg.id, data, sender.id);
+                    callback(msg.id, sender.latestData[msg.id], sender.id);
                 });
                 // Object specific callbacks
             } else {
-                this.syncData[msg.id].callback(msg.id, data, sender.id);
+                this.syncData[msg.id].callback(msg.id, sender.latestData[msg.id], sender.id);
             }
         }
 
-        this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: this.id});
+        this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: sender.id});
     } else {
         sender.initial[msg.id] = false;
     }
+    this.emit('XDdataReceived', {dataId: msg.id, summary: summary, sender: sender.id});
+
 };
 
 XDMVC.prototype.handleServerReady = function handleServerReady(){
@@ -377,7 +379,7 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
         this.syncData[id].observer.discardChanges();
 
     }
-    return old;
+    return summary;
 };
 
 XDMVC.prototype.getDelta = function(oldObj, newObj){

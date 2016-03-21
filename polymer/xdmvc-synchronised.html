@@ -98,7 +98,9 @@
                 }
             }.bind(this));
 
-            XDmvc.on("XDdataReceived", this.othersChanged.bind(this) );
+            XDmvc.on("XDdeviceUpdated", this.othersChanged.bind(this) );
+            XDmvc.on("XDdisconnection", this.disconnect.bind(this));
+
         },
 
         objectsChanged: function(value) {
@@ -108,6 +110,13 @@
                 Platform.performMicrotaskCheckpoint();
             }
             this._skip = false;
+        },
+
+        disconnect: function(device){
+            var senderHereIndex = this.otherDevices.findIndex(function(d){
+                return d.id == device.id;
+            });
+            this.splice("otherDevices", senderHereIndex, 1);
         },
 
         othersChanged: function(detail) {

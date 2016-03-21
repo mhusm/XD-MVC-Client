@@ -141,6 +141,7 @@ XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
     newInterest.forEach(function(dataId){
         if (oldInterests.indexOf(dataId) === -1) {
             sender.send('sync', { data: this.syncData[dataId].data, id: dataId });
+            this.updateDevice(sender, dataId);
         }
     }, this);
     Platform.performMicrotaskCheckpoint();
@@ -151,10 +152,6 @@ XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
 XDMVC.prototype.handleSync = function handleSync (data, sender){
     var msg = data;
     var summary;
-
-    if (!sender.latestData[msg.id])  {
-        sender.latestData[msg.id] = msg.data;
-    }
 
     // Don't update when the device freshly connected and it initiated the connection
     if (!sender.initial[msg.id]) {
@@ -172,17 +169,38 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
                 callbacks.forEach(function(callback){
                     callback(msg.id, sender.latestData[msg.id], sender.id);
                 });
-                // Object specific callbacks
+            // Object specific callbacks
             } else {
                 this.syncData[msg.id].callback(msg.id, sender.latestData[msg.id], sender.id);
             }
         }
+        this.emit('XDdeviceUpdated', {dataId: msg.id, summary: summary, sender: sender.id});
+
 
         this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: sender.id});
+
+        // If other devices implement the default merge behaviour, we proactively update their latest data to the same value
+        this.getConnectedDevices().filter(function(device){
+            return device !== sender;
+        }).forEach(function(device){
+            this.updateDevice(device, msg.id);
+        }, this);
     } else {
         sender.initial[msg.id] = false;
     }
-    this.emit('XDdataReceived', {dataId: msg.id, summary: summary, sender: sender.id});
+
+};
+
+XDMVC.prototype.updateDevice = function(device, dataId){
+    var summary;
+    if (this.doesMerge(device, dataId)) {
+        if (!device.latestData[dataId]) {
+            device.latestData[dataId] = Array.isArray(this.syncData[dataId].data)? [] : {} ;
+        }
+        summary = this.update(device.latestData[dataId], this.syncData[dataId].data);
+        this.emit('XDdeviceUpdated', {dataId: dataId, summary: summary, sender: device.id});
+    }
+    return summary;
 
 };
 
@@ -283,7 +301,7 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
         }
     }
 
-    var msg = {type: 'sync', data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0};
+ //   var msg = {type: 'sync', data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0};
     var connectedDevices = this.getConnectedDevices();
     var len = connectedDevices.length,
         i;
@@ -298,6 +316,12 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
         this.sendToServer("sync", {type: 'sync', data: this.syncData[id].data});
     }
     this.emit('XDsyncData', id);
+
+    // If other devices implement the default merge behaviour, we proactively update their latest data to the same value
+    this.getConnectedDevices().forEach(function(device){
+        this.updateDevice(device, id);
+    }, this);
+
 };
 
 XDMVC.prototype.synchronize = function (data, callback, id, updateServer) {
@@ -510,11 +534,11 @@ XDMVC.prototype.getRoleCallbacks = function (dataId) {
     var result = [];
     this.roles.filter(function (r) {
         return r !== this.defaultRole
-    }.bind(this)).forEach(function (role) {
+    }, this).forEach(function (role) {
         if (this.configuredRoles[role] && this.configuredRoles[role][dataId]) {
-            result.push(XDmvc.configuredRoles[role][dataId]);
+            result.push(this.configuredRoles[role][dataId]);
         }
-    }.bind(this));
+    }, this);
     return result;
 };
 
@@ -534,6 +558,17 @@ XDMVC.prototype.isInterested = function(role, dataId){
     return this.configuredRoles[role] && typeof this.configuredRoles[role][dataId] !== "undefined" ;
 };
 
+XDMVC.prototype.doesMerge = function(device, dataId){
+    var callbacks = [];
+    device.roles.filter(function (r) {
+        return r !== this.defaultRole
+    }, this).forEach(function (role) {
+        if (this.configuredRoles[role] && this.configuredRoles[role][dataId]) {
+            callbacks.push(this.configuredRoles[role][dataId]);
+        }
+    }, this);
+    return callbacks.length === 0;
+};
 
 /*
  --------------------------------

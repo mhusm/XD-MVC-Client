@@ -275,6 +275,7 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
             }.bind(this));
             data = arrayDelta;
         } else {
+            //transforming  changes (arguments) into an array.
             objectDelta=Array.prototype.slice.call(changes, 0 ,3);
             data = objectDelta;
         }
@@ -304,7 +305,7 @@ XDMVC.prototype.synchronize = function (data, callback, id, updateServer) {
     this.syncData[id] = {data: data,
         callback: callback,
         syncFunction: sync,
-        updateServer: updateServer,
+        updateServer: updateServer
     };
     if (Array.isArray(data)){
         this.syncData[id].observer = new ArrayObserver(data);

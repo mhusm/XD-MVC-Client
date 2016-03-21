@@ -37,8 +37,18 @@
             updateServer: {
                 type: Boolean,
                 value: false
+            },
+
+            /* Skip prevents a feedback loops. If the change is received from XD-MVC, subsequent changes in are should not trigger
+                any action in objectsChanged.
+             */
+            skip: {
+                type: Boolean,
+                value: false
             }
         },
+
+        observers: ["objectsChanged(objects.*)"],
 
         ready: function() {
             Object.keys(this.objects).forEach(function (key) {
@@ -50,22 +60,37 @@
             },this);
             XDmvc.on("XDupdate", function(id, summary){
                 if (this.objects.hasOwnProperty(id)) {
-                    if (Array.isArray(this.objects[id])) {
-                        this.notifySplices("objects." +id, summary);
+                    console.log("notifying");
+                     if (Array.isArray(this.objects[id])) {
+                         this.skip = true;
+                         this.notifySplices("objects." +id, summary);
                     } else {
                         var key;
                         for (key in summary[0]){
+                            this.skip = true;
                             this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
                         }
                         for (key in summary[1]){
+                            this.skip = true;
                             this.notifyPath("objects." +id +"." +key, undefined);
                         }
                         for (key in summary[2]){
+                            this.skip = true;
                             this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
                         }
                     }
                 }
             }.bind(this));
+        },
+
+        objectsChanged: function(value) {
+            // TODO In the future, observe-js will probably be removed and then we should handle this ourselves
+            // Tell observe-js to check for changes
+            console.log(value);
+            if (!this.skip) {
+                Platform.performMicrotaskCheckpoint();
+            }
+            this.skip = false;
         }
 
     });

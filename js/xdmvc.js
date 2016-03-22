@@ -567,7 +567,7 @@ XDMVC.prototype.doesMerge = function(device, dataId){
             callbacks.push(this.configuredRoles[role][dataId]);
         }
     }, this);
-    return callbacks.length === 0;
+    return callbacks.length === 0 && device.roles.indexOf(this.defaultRole) > -1;
 };
 
 /*

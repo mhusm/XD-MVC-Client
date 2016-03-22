@@ -38,6 +38,9 @@
             },
             filter: {
                 type: String
+            },
+            noMerge: {
+                type: Boolean
             }
         },
 
@@ -58,7 +61,7 @@
                 }
             }, this);
 
-            XDmvc.configureRole(this.name, configurations, this.filter);
+            XDmvc.configureRole(this.name, configurations, this.filter, this.noMerge);
         }
 
 

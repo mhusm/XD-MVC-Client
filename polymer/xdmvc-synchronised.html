@@ -120,36 +120,40 @@
         },
 
         othersChanged: function(detail) {
-            var sender = XDmvc.getConnectedDevices().find(function(device){
-                return device.id == detail.sender;
-            });
-            var senderHereIndex = this.otherDevices.findIndex(function(device){
-                return device.id == detail.sender;
-            });
-            var senderHere = this.otherDevices[senderHereIndex];
+            // Only notify for changes that were tracked through this element.
+            if (!!this.objects[detail.dataId]) {
+
+                var sender = XDmvc.getConnectedDevices().find(function(device){
+                    return device.id == detail.sender;
+                });
+                var senderHereIndex = this.otherDevices.findIndex(function(device){
+                    return device.id == detail.sender;
+                });
+                var senderHere = this.otherDevices[senderHereIndex];
 
 
-            if (!senderHere) {
-                this.push("otherDevices", {id: detail.sender, data: sender.latestData});
-            } else {
-                if (!detail.summary) {
-                    this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId, senderHere.data[detail.dataId]);
-                } else if (!!senderHere) {
-                    if (Array.isArray(senderHere[detail.id])) {
-                        this.notifySplices("otherDevices." +senderHereIndex +".data." +detail.dataId, senderHere.data[detail.dataId]);
-                    } else {
-                        var key;
-                        for (key in detail.summary[0]){
-                            this._skip = true;
-                            this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, senderHere.data[detail.dataId][key]);
-                        }
-                        for (key in detail.summary[1]){
-                            this._skip = true;
-                            this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, undefined);
-                        }
-                        for (key in detail.summary[2]){
-                            this._skip = true;
-                            this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, senderHere.data[detail.dataId][key]);
+                if (!senderHere) {
+                    this.push("otherDevices", {id: detail.sender, data: sender.latestData});
+                } else {
+                    if (!detail.summary) {
+                        this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId, senderHere.data[detail.dataId]);
+                    } else if (!!senderHere) {
+                        if (Array.isArray(senderHere[detail.id])) {
+                            this.notifySplices("otherDevices." +senderHereIndex +".data." +detail.dataId, senderHere.data[detail.dataId]);
+                        } else {
+                            var key;
+                            for (key in detail.summary[0]){
+                                this._skip = true;
+                                this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, senderHere.data[detail.dataId][key]);
+                            }
+                            for (key in detail.summary[1]){
+                                this._skip = true;
+                                this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, undefined);
+                            }
+                            for (key in detail.summary[2]){
+                                this._skip = true;
+                                this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, senderHere.data[detail.dataId][key]);
+                            }
                         }
                     }
                 }

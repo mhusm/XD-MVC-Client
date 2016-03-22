@@ -35,6 +35,9 @@
             },
             config: {
                 type: Array
+            },
+            filter: {
+                type: String
             }
         },
 
@@ -55,7 +58,7 @@
                 }
             }, this);
 
-            XDmvc.configureRole(this.name, configurations);
+            XDmvc.configureRole(this.name, configurations, this.filter);
         }
 
 

@@ -141,7 +141,7 @@ XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
     newInterest.forEach(function(dataId){
         if (oldInterests.indexOf(dataId) === -1) {
             sender.send('sync', { data: this.syncData[dataId].data, id: dataId });
-            this.updateDevice(sender, dataId, this.syncData[dataId].data);
+            this.updateDevice(sender, dataId, this.syncData[dataId].data, this);
         }
     }, this);
     Platform.performMicrotaskCheckpoint();
@@ -159,7 +159,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
         var callbacks = this.getRoleCallbacks(msg.id);
 
         // Default merge behaviour, if nothing else is specified
-        if (callbacks.length === 0 && !this.syncData[msg.id].callback) {
+        if (callbacks.length === 0 && !this.syncData[msg.id].callback && this.passFilter(msg.id, sender)) {
             summary = this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
             sender.latestData[msg.id] = this.syncData[msg.id].data;
         } else {
@@ -170,7 +170,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
                     callback(msg.id, sender.latestData[msg.id], sender.id);
                 });
             // Object specific callbacks
-            } else {
+            } else if (this.syncData[msg.id].callback) {
                 this.syncData[msg.id].callback(msg.id, sender.latestData[msg.id], sender.id);
             }
         }
@@ -183,7 +183,7 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
         this.getConnectedDevices().filter(function(device){
             return device !== sender;
         }).forEach(function(device){
-            this.updateDevice(device, msg.id, sender.latestData[msg.id]);
+            this.updateDevice(device, msg.id, sender.latestData[msg.id], sender);
         }, this);
     } else {
         sender.initial[msg.id] = false;
@@ -191,9 +191,9 @@ XDMVC.prototype.handleSync = function handleSync (data, sender){
 
 };
 
-XDMVC.prototype.updateDevice = function(device, dataId, newdata){
+XDMVC.prototype.updateDevice = function(device, dataId, newdata, sender){
     var summary;
-    if (this.doesMerge(device, dataId)) {
+    if (this.doesMerge(device, dataId, sender)) {
         if (!device.latestData[dataId]) {
             device.latestData[dataId] = Array.isArray(this.syncData[dataId].data)? [] : {} ;
         }
@@ -236,6 +236,7 @@ XDMVC.prototype.sendToServer = function sendToServer(msgType, data){
 XDMVC.prototype.connectTo = function connectTo (deviceId){
     this.XDd2d.connectTo(deviceId);
 };
+
 
 /*
  ------------
@@ -319,7 +320,7 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
 
     // If other devices implement the default merge behaviour, we proactively update their latest data to the same value
     this.getConnectedDevices().forEach(function(device){
-        this.updateDevice(device, id, this.syncData[id].data);
+        this.updateDevice(device, id, this.syncData[id].data, this);
     }, this);
 
 };
@@ -449,7 +450,7 @@ XDMVC.prototype.discardChanges = function(id){
  Configurations should contain either strings or objects:
  ["albums", "images"] or [{"albums": albumCallback}]
  */
-XDMVC.prototype.configureRole = function(role, configurations){
+XDMVC.prototype.configureRole = function(role, configurations, filter){
     this.configuredRoles[role] = {};
     configurations.forEach(function(config){
         if (typeof config == 'string' || config instanceof String) {
@@ -460,6 +461,9 @@ XDMVC.prototype.configureRole = function(role, configurations){
         }
     }, this);
 
+    if (filter) {
+        this.configuredRoles[role].filter = filter;
+    }
     var configs = this.configuredRoles;
 
     /*
@@ -500,7 +504,7 @@ XDMVC.prototype.sendRoles = function () {
 // Returns an array of connections that have a given role
 XDMVC.prototype.otherHasRole = function (role) {
     var haveRoles = this.connectedDevices.filter(function (conn) {
-        return conn.roles ? conn.roles.indexOf(role) > -1 : false;
+        return conn.roles ? conn.hasRole(role)  : false;
     }).map(function (conn) {
         return conn.peer;
     });
@@ -543,7 +547,7 @@ XDMVC.prototype.getRoleCallbacks = function (dataId) {
 };
 
 XDMVC.prototype.deviceIsInterested = function(device, dataId){
-    return device.roles.indexOf(this.defaultRole) > -1 || device.roles.some(function(role){
+    return device.hasRole(this.defaultRole) || device.roles.some(function(role){
             return this.isInterested(role, dataId);
         }, this) ;
 };
@@ -558,7 +562,7 @@ XDMVC.prototype.isInterested = function(role, dataId){
     return this.configuredRoles[role] && typeof this.configuredRoles[role][dataId] !== "undefined" ;
 };
 
-XDMVC.prototype.doesMerge = function(device, dataId){
+XDMVC.prototype.doesMerge = function(device, dataId, sender){
     var callbacks = [];
     device.roles.filter(function (r) {
         return r !== this.defaultRole
@@ -567,7 +571,15 @@ XDMVC.prototype.doesMerge = function(device, dataId){
             callbacks.push(this.configuredRoles[role][dataId]);
         }
     }, this);
-    return callbacks.length === 0 && device.roles.indexOf(this.defaultRole) > -1;
+    return callbacks.length === 0 && device.hasRole(this.defaultRole) && device.passFilter(dataId, sender);
+};
+
+
+XDMVC.prototype.passFilter = function (dataId, device) {
+    return this.roles.filter(function(role){
+        return this.configuredRoles[role] && this.configuredRoles[role].filter && !device.hasRole(this.configuredRoles[role].filter);
+    }, this).length == 0;
+
 };
 
 /*
@@ -687,3 +699,16 @@ XDMVC.prototype.detectDevice = function(){
 /* -------------- */
 var XDmvc = new XDMVC();
 
+/* Extension to D2D ConnectedDevice */
+/* -------------------------------- */
+ConnectedDevice.prototype.hasRole = function hasRole(role) {
+    return  this.roles && this.roles.indexOf(role) > -1;
+};
+
+
+ConnectedDevice.prototype.passFilter = function (dataId, sender) {
+    return this.roles.filter(function(role){
+            return XDmvc.configuredRoles[role] && XDmvc.configuredRoles[role].filter && !sender.hasRole(XDmvc.configuredRoles[role].filter);
+        }, this).length == 0;
+
+};

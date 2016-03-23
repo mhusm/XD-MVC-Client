@@ -35,15 +35,30 @@
                 readOnly: true,
                 notify: true,
                 value: function(){return {thisDevice: {}, availableDevices: [], connectedDevices: [], othersDevices: {}}}
-            }
-        },
+            },
 
+            connectedDevices: {
+                type: Array,
+                readOnly: true,
+                notify: true,
+                value: function() {
+                    return [];
+                }
+            }
+
+            /* TODO could all of these be split into single properties? */
+        },
 
         created: function(){
             synchronizeArray("devices.connectedDevices", XDmvc.getConnectedDevices(), this);
             synchronizeArray("devices.availableDevices", XDmvc.getAvailableDevices(), this);
             synchronizeObject("devices.othersDevices", XDmvc.othersDevices, this);
             synchronizeObject("devices.thisDevice", XDmvc.device, this);
+
+            synchronizeArray("connectedDevices", XDmvc.getConnectedDevices(), this);
+            XDmvc.on("XDdevice", function(device){
+                this.fire("device-changed", device);
+            }.bind(this));
         }
 
     });

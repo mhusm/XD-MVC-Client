@@ -49,6 +49,10 @@
                 observer: "selectChanged",
                 reflectToAttribute: true,
                 notify: true
+            },
+            noDefault: {
+                type: Boolean,
+                value: false
             }
         },
 
@@ -58,6 +62,9 @@
             var that  = this;
             synchronizeArray("roles.selected", XDmvc.roles, this);
             synchronizeObject("roles.othersRoles", XDmvc.othersRoles, this, function(){that.fire("othersRolesChanged")});
+        },
+        attached: function() {
+            XDmvc.removeRole(XDmvc.defaultRole);
         },
 
         updateIsselected: function() {

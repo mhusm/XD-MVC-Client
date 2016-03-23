@@ -143,15 +143,12 @@
                         } else {
                             var key;
                             for (key in detail.summary[0]){
-                                this._skip = true;
                                 this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, senderHere.data[detail.dataId][key]);
                             }
                             for (key in detail.summary[1]){
-                                this._skip = true;
                                 this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, undefined);
                             }
                             for (key in detail.summary[2]){
-                                this._skip = true;
                                 this.notifyPath("otherDevices." +senderHereIndex +".data." +detail.dataId +"." +key, senderHere.data[detail.dataId][key]);
                             }
                         }

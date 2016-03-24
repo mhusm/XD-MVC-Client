@@ -61,7 +61,9 @@
         created: function(){
             var that  = this;
             synchronizeArray("roles.selected", XDmvc.roles, this);
-            synchronizeObject("roles.othersRoles", XDmvc.othersRoles, this, function(){that.fire("othersRolesChanged")});
+            synchronizeObject("roles.othersRoles", XDmvc.othersRoles, this, function(){
+                that.fire("others-roles-changed")
+            });
         },
         attached: function() {
             XDmvc.removeRole(XDmvc.defaultRole);

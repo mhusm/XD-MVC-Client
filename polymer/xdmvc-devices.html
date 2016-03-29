@@ -57,6 +57,7 @@
 
             synchronizeArray("connectedDevices", XDmvc.getConnectedDevices(), this);
             XDmvc.on("XDdevice", function(device){
+                // This is a bit of a workaround. The devices element should be improved to properly notify changes, e.g. type or size
                 this.fire("device-changed", device);
             }.bind(this));
         }

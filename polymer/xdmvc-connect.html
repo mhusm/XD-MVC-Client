@@ -17,10 +17,12 @@
             }
 
         </style>
-        <xdmvc-badge id="badge" on-click="toggleQR" connections="[[connections]]"></xdmvc-badge>
+        <xdmvc-badge id="badge" on-click="toggleQR" connections="[[devices.connectedDevices]]"></xdmvc-badge>
+        <xdmvc-url-pairing id="url" url="{{url}}"></xdmvc-url-pairing>
+        <xdmvc-devices on-device-changed="deviceChanged" devices="{{devices}}"></xdmvc-devices>
         <div hidden$="{{!showQR}}">
             <xdmvc-qr url="[[url]]"></xdmvc-qr>
-            <xdmvc-connections connections="[[connections]]"></xdmvc-connections>
+            <xdmvc-connections connections="[[devices.connectedDevices]]"></xdmvc-connections>
 
         </div>
 
@@ -36,12 +38,11 @@
                 value: false,
                 notify: true
             },
-            connections: {
-                type: Array
-            },
             url:{
-                type: String,
-                notify: true
+                type: String
+            },
+            devices: {
+                type: Object
             }
         },
         toggleQR: function() {
@@ -53,6 +54,16 @@
             this.async(function(){
                 this.$.badge.updatePosition();
             }, 50);
+        },
+
+        deviceChanged: function(){
+            // This is a bit of a workaround.
+            // The devices element should be improved to properly notify changes, e.g. type or size
+            console.log(this.devices);
+            this.$$("xdmvc-connections").connections = null;
+            this.async(function(){
+                this.$$("xdmvc-connections").connections = this.devices.connectedDevices.slice();
+            });
         }
     });
 </script>

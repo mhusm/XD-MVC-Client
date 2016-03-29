@@ -66,7 +66,9 @@
             });
         },
         attached: function() {
-            XDmvc.removeRole(XDmvc.defaultRole);
+            if (this.noDefault) {
+                XDmvc.removeRole(XDmvc.defaultRole);
+            }
         },
 
         updateIsselected: function() {

@@ -1,10 +1,13 @@
 <link rel="import" href="../../polymer/polymer.html">
+<link rel="import" href="../../iron-icons/iron-icons.html">
+<link rel="import" href="../../iron-icons/hardware-icons.html">
+
 
 <dom-module id="xdmvc-connections">
     <template>
         <ul>
-            <template is="dom-repeat" items="{{connections}}">
-                <li>{{item.id}}</li>
+            <template is="dom-repeat" items="[[connections]]">
+                <li><iron-icon icon="[[getIcon(item.device.type)]]"></iron-icon><span>[[item.id]]</span></li>
             </template>
         </ul>
     </template>
@@ -17,6 +20,24 @@
             connections: {
                 type: Array
             }
-        }
+        },
+
+        getIcon: function(type) {
+            console.log("getting icon");
+            console.log(type);
+            if (type=== "large") {
+                return "hardware:laptop";
+            } else if (type==="medium") {
+                return "hardware:tablet-android"
+
+            } else if (type==="xlarge") {
+                return "hardware:desktop-windows"
+            }
+            else if (type==="small") {
+                return "hardware:smartphone"
+            } else {
+                return "hardware:devices-other"
+            }
+         }
     });
 </script>

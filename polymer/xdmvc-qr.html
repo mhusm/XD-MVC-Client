@@ -5,7 +5,7 @@
 <dom-module id="xdmvc-qr">
     <template>
         <qr-code  data="[[url]]"></qr-code>
-        <div>Scan the QR code or copy the URL below and open it in another device to pair it to this one.</div>
+        <div>[[message]]</div>
         <div id="url"></div>
     </template>
 </dom-module>/
@@ -18,6 +18,10 @@
                 type: String,
                 notify: true,
                 observer: 'urlChanged'
+            },
+            message: {
+                type: String,
+                value: "Scan the QR code or copy the URL below and open it in another device to pair it to this one."
             }
         },
         urlChanged: function(){

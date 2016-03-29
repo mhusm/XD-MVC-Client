@@ -21,7 +21,7 @@
         <xdmvc-url-pairing id="url" url="{{url}}"></xdmvc-url-pairing>
         <xdmvc-devices on-device-changed="deviceChanged" devices="{{devices}}"></xdmvc-devices>
         <div hidden$="{{!showQR}}">
-            <xdmvc-qr url="[[url]]"></xdmvc-qr>
+            <xdmvc-qr url="[[url]]" message="[[message]]"></xdmvc-qr>
             <xdmvc-connections connections="[[devices.connectedDevices]]"></xdmvc-connections>
 
         </div>
@@ -43,7 +43,8 @@
             },
             devices: {
                 type: Object
-            }
+            },
+            message: String
         },
         toggleQR: function() {
             this.showQR = !this.showQR;

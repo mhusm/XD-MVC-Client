@@ -20,6 +20,10 @@
                 margin-top: 17px;
             }
 
+            paper-badge {
+                --paper-badge-background : var(--xdmvc-badge-color);
+            }
+
         </style>
         <paper-icon-button id="butn" raised icon="hardware:cast"></paper-icon-button>
         <paper-badge id="badge" for="butn" label="[[computeNumber(connections.length)]]"></paper-badge>

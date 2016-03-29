@@ -11,6 +11,11 @@
                 padding: 7px;
 
             }
+
+            xdmvc-badge {
+                --xdmvc-badge-color : var(--connect-badge-color);
+            }
+
         </style>
         <xdmvc-badge id="badge" on-click="toggleQR" connections="[[connections]]"></xdmvc-badge>
         <div hidden$="{{!showQR}}">

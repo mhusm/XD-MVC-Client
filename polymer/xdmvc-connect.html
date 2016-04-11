@@ -60,7 +60,6 @@
         deviceChanged: function(){
             // This is a bit of a workaround.
             // The devices element should be improved to properly notify changes, e.g. type or size
-            console.log(this.devices);
             this.$$("xdmvc-connections").connections = null;
             this.async(function(){
                 this.$$("xdmvc-connections").connections = this.devices.connectedDevices.slice();

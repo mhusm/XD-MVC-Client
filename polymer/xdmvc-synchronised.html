@@ -29,6 +29,13 @@
         is: "xdmvc-synchronised",
 
         properties: {
+            /* Skip prevents a feedback loops. If the change is received from XD-MVC, subsequent changes in are should not trigger
+             any action in objectsChanged.
+             */
+            _skip: {
+                type: Boolean,
+                value: false
+            },
             objects: {
                 type: Object,
                 value: false,
@@ -49,15 +56,8 @@
                     return [];
                 },
                 notify: true
-            },
-
-            /* Skip prevents a feedback loops. If the change is received from XD-MVC, subsequent changes in are should not trigger
-                any action in objectsChanged.
-             */
-            _skip: {
-                type: Boolean,
-                value: false
             }
+
         },
 
         observers: ["objectsChanged(objects.*)"],
@@ -100,13 +100,13 @@
 
         },
 
-        objectsChanged: function(value) {
+        objectsChanged: function(value, value2) {
             // TODO In the future, observe-js will probably be removed and then we should handle this ourselves
             // Tell observe-js to check for changes
-            if (!this._skip) {
+             if (!this._skip && value.path.indexOf(".length") == -1) {
                 Platform.performMicrotaskCheckpoint();
-                this._skip = false;
             }
+            this._skip = false;
         },
 
         disconnect: function(device){

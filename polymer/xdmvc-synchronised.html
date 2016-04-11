@@ -77,21 +77,18 @@
             },this);
             XDmvc.on("XDupdate", function(id, summary){
                 if (this.objects.hasOwnProperty(id)) {
-                    if (Array.isArray(this.objects[id])) {
-                         this._skip = true;
+                    this._skip = true;
+                     if (Array.isArray(this.objects[id])) {
                          this.notifySplices("objects." +id, summary);
                     } else {
                         var key;
                         for (key in summary[0]){
-                            this._skip = true;
                             this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
                         }
                         for (key in summary[1]){
-                            this._skip = true;
                             this.notifyPath("objects." +id +"." +key, undefined);
                         }
                         for (key in summary[2]){
-                            this._skip = true;
                             this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
                         }
                     }
@@ -108,8 +105,8 @@
             // Tell observe-js to check for changes
             if (!this._skip) {
                 Platform.performMicrotaskCheckpoint();
+                this._skip = false;
             }
-            this._skip = false;
         },
 
         disconnect: function(device){
@@ -122,8 +119,7 @@
         othersChanged: function(detail) {
             // Only notify for changes that were tracked through this element.
             if (!!this.objects[detail.dataId]) {
-
-                var sender = XDmvc.getConnectedDevices().find(function(device){
+                 var sender = XDmvc.getConnectedDevices().find(function(device){
                     return device.id == detail.sender;
                 });
                 var senderHereIndex = this.otherDevices.findIndex(function(device){

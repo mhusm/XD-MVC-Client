@@ -237,9 +237,9 @@ XDMVC.prototype.sendToAll = function sendToAll(msgType, data){
     }
 };
 
-XDMVC.prototype.sendToServer = function sendToServer(msgType, data){
+XDMVC.prototype.sendToServer = function sendToServer(msgType, data, callback){
     if (this.XDd2d.serverReady) {
-        this.XDd2d.sendToServer(msgType, data);
+        this.XDd2d.sendToServer(msgType, data, callback);
     }
 };
 

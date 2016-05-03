@@ -46,3 +46,6 @@ XDEmitter.prototype.emit = function (event) {
         });
     }
 };
+
+module.exports = XDEmitter;
+

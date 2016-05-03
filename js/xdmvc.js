@@ -21,6 +21,10 @@
 
 /*global console, Peer, Event */
 'use strict';
+
+var XDd2d = require("./d2d.js");
+var XDEmitter = require("./events.js")
+
 /*jslint plusplus: true */
 function XDMVC () {
     XDEmitter.call(this);
@@ -120,7 +124,7 @@ XDMVC.prototype.handleDevice = function handleDevice (device, sender){
 
     sender.device = device;
     this.othersDevices[device.type] +=1;
-    Platform.performMicrotaskCheckpoint();
+    // Platform.performMicrotaskCheckpoint();
 
     if (!sender.initalized) {
         sender.initalized = true;
@@ -141,19 +145,19 @@ XDMVC.prototype.handleRoles = function handleRoles (roles, sender){
     newInterest.forEach(function(dataId){
         if (oldInterests.indexOf(dataId) === -1) {
             sender.send('sync', { data: this.syncData[dataId].data, id: dataId });
-            this.updateDevice(sender, dataId, this.syncData[dataId].data, this);
         }
     }, this);
-    Platform.performMicrotaskCheckpoint();
+    // Platform.performMicrotaskCheckpoint();
     this.emit("XDroles", sender);
 
 };
 
-XDMVC.prototype.handleSync = function handleSync (msg, sender){
-    var summary;
+XDMVC.prototype.handleSync = function handleSync (data, sender){
+    var msg = data;
+    var data;
 
-    if (!sender.latestData[msg.id]) {
-        sender.latestData[msg.id] = Array.isArray(this.syncData[msg.id].data)? [] : {} ;
+    if (!sender.latestData[msg.id])  {
+        sender.latestData[msg.id] = msg.data;
     }
 
     // Don't update when the device freshly connected and it initiated the connection
@@ -162,56 +166,26 @@ XDMVC.prototype.handleSync = function handleSync (msg, sender){
         var callbacks = this.getRoleCallbacks(msg.id);
 
         // Default merge behaviour, if nothing else is specified
-        if (callbacks.length === 0 && !this.syncData[msg.id].callback && this.passFilterAndMerge(msg.id, sender)) {
-            summary = this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
-            sender.latestData[msg.id] = this.syncData[msg.id].data;
+        if (callbacks.length === 0 && !this.syncData[msg.id].callback) {
+            data = this.update(this.syncData[msg.id].data, msg.data, msg.arrayDelta, msg.objectDelta, msg.id);
+            sender.latestData[msg.id] = data;
         } else {
             // If specified, role specific callbacks
-            summary = this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
+            data = this.update(sender.latestData[msg.id], msg.data, msg.arrayDelta, msg.objectDelta);
             if (callbacks.length > 0) {
                 callbacks.forEach(function(callback){
-                    callback(msg.id, sender.latestData[msg.id], sender.id);
+                    callback(msg.id, data, sender.id);
                 });
-            // Object specific callbacks
-            } else if (this.syncData[msg.id].callback) {
-                this.syncData[msg.id].callback(msg.id, sender.latestData[msg.id], sender.id);
+                // Object specific callbacks
+            } else {
+                this.syncData[msg.id].callback(msg.id, data, sender.id);
             }
         }
-        this.emit('XDdeviceUpdated', {dataId: msg.id, summary: summary, sender: sender.id});
 
-
-        this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: sender.id});
-
-        // If other devices implement the default merge behaviour, we proactively update their latest data to the same value
-        this.getConnectedDevices().filter(function(device){
-            return device !== sender;
-        }).forEach(function(device){
-            this.updateDevice(device, msg.id, sender.latestData[msg.id], sender);
-        }, this);
+        this.emit('XDsync', {dataId: msg.id, data: msg.data, sender: this.id});
     } else {
         sender.initial[msg.id] = false;
-        if (!this.doesMerge(sender, msg.id, this)) {
-            if (!sender.latestData[msg.id]) {
-                sender.latestData[msg.id] = Array.isArray(this.syncData[msg.id].data)? [] : {} ;
-            }
-            summary = this.update(sender.latestData[msg.id], msg.data);
-            this.emit('XDdeviceUpdated', {dataId: msg.id, summary: summary, sender: sender.id});
-        }
     }
-
-};
-
-XDMVC.prototype.updateDevice = function(device, dataId, newdata, sender){
-    var summary;
-    if (this.doesMerge(device, dataId, sender)) {
-        if (!device.latestData[dataId]) {
-            device.latestData[dataId] = Array.isArray(this.syncData[dataId].data)? [] : {} ;
-        }
-        summary = this.update(device.latestData[dataId], newdata);
-        this.emit('XDdeviceUpdated', {dataId: dataId, summary: summary, sender: device.id});
-    }
-    return summary;
-
 };
 
 XDMVC.prototype.handleServerReady = function handleServerReady(){
@@ -237,16 +211,15 @@ XDMVC.prototype.sendToAll = function sendToAll(msgType, data){
     }
 };
 
-XDMVC.prototype.sendToServer = function sendToServer(msgType, data, callback){
+XDMVC.prototype.sendToServer = function sendToServer(msgType, data){
     if (this.XDd2d.serverReady) {
-        this.XDd2d.sendToServer(msgType, data, callback);
+        this.XDd2d.sendToServer(msgType, data);
     }
 };
 
 XDMVC.prototype.connectTo = function connectTo (deviceId){
     this.XDd2d.connectTo(deviceId);
 };
-
 
 /*
  ------------
@@ -306,13 +279,12 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
             }.bind(this));
             data = arrayDelta;
         } else {
-            //transforming  changes (arguments) into an array.
             objectDelta=Array.prototype.slice.call(changes, 0 ,3);
             data = objectDelta;
         }
     }
 
- //   var msg = {type: 'sync', data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0};
+    var msg = {type: 'sync', data: data, id: id, arrayDelta: arrayDelta.length>0, objectDelta: objectDelta.length >0};
     var connectedDevices = this.getConnectedDevices();
     var len = connectedDevices.length,
         i;
@@ -327,95 +299,89 @@ XDMVC.prototype.sendSyncToAll = function (changes, id) {
         this.sendToServer("sync", {type: 'sync', data: this.syncData[id].data});
     }
     this.emit('XDsyncData', id);
-
-    // If other devices implement the default merge behaviour, we proactively update their latest data to the same value
-    this.getConnectedDevices().forEach(function(device){
-        this.updateDevice(device, id, this.syncData[id].data, this);
-    }, this);
-
 };
 
-XDMVC.prototype.synchronize = function (data, callback, id, updateServer) {
-    // if no id given, generate one. Though this may not always work. It could be better to enforce IDs.
-    id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
-    var sync = function (data) {return XDmvc.sendSyncToAll(arguments, id); };
-    this.syncData[id] = {data: data,
-        callback: callback,
-        syncFunction: sync,
-        updateServer: updateServer
-    };
-    if (Array.isArray(data)){
-        this.syncData[id].observer = new ArrayObserver(data);
-        this.syncData[id].observer.open(sync);
-    } else {
-        // TODO this only observes one level. should observe nested objects as well?
-        this.syncData[id].observer = new ObjectObserver(data);
-        this.syncData[id].observer.open(sync);
-    }
-};
+// XDMVC.prototype.synchronize = function (data, callback, id, updateServer) {
+//     // if no id given, generate one. Though this may not always work. It could be better to enforce IDs.
+//     id = typeof id !== 'undefined' ? id : 'sync' + (XDmvc.lastSyncId++);
+//     var sync = function (data) {return XDmvc.sendSyncToAll(arguments, id); };
+//     this.syncData[id] = {data: data,
+//         callback: callback,
+//         syncFunction: sync,
+//         updateServer: updateServer,
+//     };
+//     if (Array.isArray(data)){
+//         this.syncData[id].observer = new ArrayObserver(data);
+//         this.syncData[id].observer.open(sync);
+//     } else {
+//         // TODO this only observes one level. should observe nested objects as well?
+//         this.syncData[id].observer = new ObjectObserver(data);
+//         this.syncData[id].observer.open(sync);
+//     }
+// };
 
 
-XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
-    var changed;
-    var removed;
-    var added = {};
-    var key;
-    var splices;
-    var summary;
-    if (Array.isArray(old)) {
-        summary = [];
-        if (arrayDelta) {
-            splices = data;
-        } else {
-            // No delta, replace old with new
-            var args= [0, old.length].concat(data);
-            splices = [args];
-        }
+// XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
+//     var changed;
+//     var removed;
+//     var added = {};
+//     var key;
+//     var splices;
+//     var summary;
+//     if (Array.isArray(old)) {
+//         summary = [];
+//         if (arrayDelta) {
+//             splices = data;
+//         } else {
+//             // No delta, replace old with new
+//             var args= [0, old.length].concat(data);
+//             splices = [args];
+//         }
 
-        splices.forEach(function(spliceArgs){
-            var rem = Array.prototype.splice.apply(old, spliceArgs);
-            var splice = {index: spliceArgs[0], removed: rem, addedCount:spliceArgs.length -2, object: old, type: 'splice'};
-            summary.push(splice);
-        });
+//         splices.forEach(function(spliceArgs){
+//             var rem = Array.prototype.splice.apply(old, spliceArgs);
+//             var splice = {index: spliceArgs[0], removed: rem, addedCount:spliceArgs.length -2, object: old, type: 'splice'};
+//             summary.push(splice);
+//         });
 
 
-    } else {
-        if (objectDelta) {
-            added = data[0];
-            removed = data[1];
-            changed = data[2];
-        }
-        else{
-            var delta = this.getDelta(old, data);
-            added = delta[0];
-            removed = delta[1];
-            changed = delta[2];
+//     } else {
+//         if (objectDelta) {
+//             added = data[0];
+//             removed = data[1];
+//             changed = data[2];
+//         }
+//         else{
+//             var delta = this.getDelta(old, data);
+//             added = delta[0];
+//             removed = delta[1];
+//             changed = delta[2];
 
-        }
+//         }
 
-        // Deleted properties
-        for (key in removed) {
-            delete old[key];
-        }
-        // New and changed properties
-        for (key in changed) {
-            old[key]= changed[key];
-        }
-        for (key in added) {
-            old[key]= added[key];
-        }
+//         // Deleted properties
+//         for (key in removed) {
+//             delete old[key];
+//         }
+//         // New and changed properties
+//         for (key in changed) {
+//             old[key]= changed[key];
+//         }
+//         for (key in added) {
+//             old[key]= added[key];
+//         }
 
-        summary = objectDelta ? data : delta;
-    }
+//         summary = objectDelta ? data : delta;
+//     }
 
-    if (id) {
-        this.emit("XDupdate", id, summary);
-        // Discard changes that were caused by the update
-        this.syncData[id].observer.discardChanges();
+//     if (id) {
+//         this.emit("XDupdate", id, summary);
+//         // Discard changes that were caused by the update
+//         this.syncData[id].observer.discardChanges();
 
-    }
-    return summary;
-};
+//     }
+//     return old;
+// };
 
 XDMVC.prototype.getDelta = function(oldObj, newObj){
     var added = {};
@@ -460,25 +426,18 @@ XDMVC.prototype.discardChanges = function(id){
  Configurations should contain either strings or objects:
  ["albums", "images"] or [{"albums": albumCallback}]
  */
-XDMVC.prototype.configureRole = function(role, configurations, filter, nomerge){
+XDMVC.prototype.configureRole = function(role, configurations){
     this.configuredRoles[role] = {};
-    var dataId;
     configurations.forEach(function(config){
         if (typeof config == 'string' || config instanceof String) {
-            dataId = config;
-            this.configuredRoles[role][dataId] = {callback: null};
+            this.configuredRoles[role][config] = null;
         } else {
             var keys  = Object.keys(config);
-            dataId = keys[0];
-            this.configuredRoles[role][dataId] =  {callback:  config[keys[0]]};
+            this.configuredRoles[role][keys[0]] = config[keys[0]];
         }
-        if (filter) {
-            this.configuredRoles[role][dataId].filter = filter;
-        }
-        this.configuredRoles[role][dataId].merge = !nomerge && !this.configuredRoles[role][dataId].callback;
     }, this);
 
-     var configs = this.configuredRoles;
+    var configs = this.configuredRoles;
 
     /*
      if(this.server.serverSocket)
@@ -492,7 +451,7 @@ XDMVC.prototype.addRole = function (role) {
         this.roles.push(role);
         this.sendRoles();
         this.emit("XDroleAdded", role);
-        Platform.performMicrotaskCheckpoint();
+        // Platform.performMicrotaskCheckpoint();
     }
 };
 
@@ -502,7 +461,7 @@ XDMVC.prototype.removeRole = function (role) {
         this.roles.splice(index, 1);
         this.emit("XDroleRemoved", role);
         this.sendRoles();
-        Platform.performMicrotaskCheckpoint();
+        // Platform.performMicrotaskCheckpoint();
     }
 };
 
@@ -518,7 +477,7 @@ XDMVC.prototype.sendRoles = function () {
 // Returns an array of connections that have a given role
 XDMVC.prototype.otherHasRole = function (role) {
     var haveRoles = this.connectedDevices.filter(function (conn) {
-        return conn.roles ? conn.hasRole(role)  : false;
+        return conn.roles ? conn.roles.indexOf(role) > -1 : false;
     }).map(function (conn) {
         return conn.peer;
     });
@@ -552,16 +511,16 @@ XDMVC.prototype.getRoleCallbacks = function (dataId) {
     var result = [];
     this.roles.filter(function (r) {
         return r !== this.defaultRole
-    }, this).forEach(function (role) {
-        if (this.configuredRoles[role] &&this.configuredRoles[role][dataId] && this.configuredRoles[role][dataId].callback) {
-            result.push(this.configuredRoles[role][dataId].callback);
+    }.bind(this)).forEach(function (role) {
+        if (this.configuredRoles[role] && this.configuredRoles[role][dataId]) {
+            result.push(XDmvc.configuredRoles[role][dataId]);
         }
-    }, this);
+    }.bind(this));
     return result;
 };
 
 XDMVC.prototype.deviceIsInterested = function(device, dataId){
-    return device.hasRole(this.defaultRole) || device.roles.some(function(role){
+    return device.roles.indexOf(this.defaultRole) > -1 || device.roles.some(function(role){
             return this.isInterested(role, dataId);
         }, this) ;
 };
@@ -576,30 +535,6 @@ XDMVC.prototype.isInterested = function(role, dataId){
     return this.configuredRoles[role] && typeof this.configuredRoles[role][dataId] !== "undefined" ;
 };
 
-
-XDMVC.prototype.doesMerge = function(device, dataId, sender){
-    var defaultremoved = device.roles.filter(function (r) {
-        return r !== this.defaultRole
-    }, this);
-    var merge = true;
-    defaultremoved.forEach(function (role) {
-        if (this.configuredRoles[role] && this.configuredRoles[role][dataId] && !this.configuredRoles[role][dataId].merge) {
-            merge = false;
-        }
-    }, this);
-    return merge && this.deviceIsInterested(device, dataId) && device.passFilterAndMerge(dataId, sender);
-};
-
-
-XDMVC.prototype.passFilterAndMerge = function (dataId, device) {
-    // Finds roles that don't pass the filter. If none are found the filter is passed
-   var filtered =  this.roles.filter(function(role){
-        return this.configuredRoles[role] && this.configuredRoles[role][dataId] &&((this.configuredRoles[role][dataId].filter && !device.hasRole(this.configuredRoles[role][dataId].filter))
-            || !this.configuredRoles[role][dataId].merge);
-    }, this);
-   return filtered.length == 0;
-
-};
 
 /*
  --------------------------------
@@ -710,27 +645,12 @@ XDMVC.prototype.detectDevice = function(){
     var name = localStorage.getItem("deviceName");
     this.device.name = name? name : this.deviceId;
     localStorage.setItem("deviceName", this.device.name);
-    Platform.performMicrotaskCheckpoint();
+    // Platform.performMicrotaskCheckpoint();
 };
 
 
 /* XDmv instance */
 /* -------------- */
-var XDmvc = new XDMVC();
+// var XDmvc = new XDMVC();
 
-/* Extension to D2D ConnectedDevice */
-/* -------------------------------- */
-ConnectedDevice.prototype.hasRole = function hasRole(role) {
-    return  this.roles && this.roles.indexOf(role) > -1;
-};
-
-
-ConnectedDevice.prototype.passFilterAndMerge = function (dataId, sender) {
-    // Finds devices that don't pass the filter. If none are found the filter is passed
-    return this.roles.filter(function(role){
-            return XDmvc.configuredRoles[role] && XDmvc.configuredRoles[role][dataId]
-                &&((XDmvc.configuredRoles[role][dataId].filter && !sender.hasRole(XDmvc.configuredRoles[role][dataId].filter))
-                || !XDmvc.configuredRoles[role][dataId].merge);
-        }, this).length == 0;
-
-};
+module.exports = XDMVC;

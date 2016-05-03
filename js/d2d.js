@@ -19,6 +19,10 @@
  *
  */
 
+var XDEmitter = require("./events.js");
+var ajax = require("./ajax.js");
+var DetectRTC = require("detectrtc/DetectRTC.min.js");
+var io = require("socket.io-client");
 
 /*
  Server (Peer and Ajax)
@@ -611,4 +615,4 @@ ConnectedDevice.prototype.installHandlers = function installHandlers(conn){
  //   this.XDd2d.emit('XDconnectionReceived', this);
 };
 
-
+module.exports = XDd2d;

@@ -87,3 +87,5 @@ ajax.postJSON = function (url, data, callback, async) {
  //   x.setRequestHeader('Content-Length', json.length);
     x.send(json);
 };
+
+module.exports = ajax;

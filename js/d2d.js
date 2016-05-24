@@ -21,8 +21,9 @@
 
 var XDEmitter = require("./events.js");
 var ajax = require("./ajax.js");
-var DetectRTC = require("detectrtc/DetectRTC.min.js");
+var DetectRTC = require("detectrtc");
 var io = require("socket.io-client");
+var Peer = require("peerjs");
 
 /*
  Server (Peer and Ajax)

@@ -398,8 +398,18 @@ XDMVC.prototype.update = function(old, data, arrayDelta, objectDelta, id){
             delete old[key];
         }
         // New and changed properties
+        var real_changed = {};
         for (key in changed) {
-            old[key]= changed[key];
+            // Check if the key really changed, sometimes it hasn't due to timing issues or during initialisation
+            if (old[key] !== changed[key]) {
+                old[key]= changed[key];
+                real_changed[key] = changed[key];
+            }
+        }
+        if (objectDelta) {
+            data[2] = real_changed;
+        } else {
+            delta[2]  =real_changed;
         }
         for (key in added) {
             old[key]= added[key];

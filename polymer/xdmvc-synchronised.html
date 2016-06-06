@@ -77,18 +77,21 @@
             },this);
             XDmvc.on("XDupdate", function(id, summary){
                 if (this.objects.hasOwnProperty(id)) {
-                    this._skip = true;
                      if (Array.isArray(this.objects[id])) {
+                         this._skip = true;
                          this.notifySplices("objects." +id, summary);
                     } else {
                         var key;
                         for (key in summary[0]){
+                            this._skip = true;
                             this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
                         }
                         for (key in summary[1]){
+                            this._skip = true;
                             this.notifyPath("objects." +id +"." +key, undefined);
                         }
                         for (key in summary[2]){
+                            this._skip = true;
                             this.notifyPath("objects." +id +"." +key, this.objects[id][key]);
                         }
                     }

@@ -108,6 +108,7 @@ XDMVC.prototype.handleDisconnection = function handleDisconnection (connectedDev
 
     this.updateOthersRoles(connectedDevice.roles, []);
 
+    Platform.performMicrotaskCheckpoint();
     this.emit("XDdisconnection", connectedDevice);
 };
 

@@ -81,7 +81,8 @@
          */
         onDeviceUnavailable: function(device) {
             var connect = getQueryParams(window.location.search).connect;
-            var newsearch = window.location.search.replace("connect="+connect, "");
+            var newsearch = window.location.search.replace("&connect="+connect, "");
+            newsearch = newsearch.replace("connect="+connect, "");
             // Fire event to work with iron-page-url
             window.history.pushState('', '', newsearch +window.location.hash);
             this.fire('location-changed', {}, {node: window});

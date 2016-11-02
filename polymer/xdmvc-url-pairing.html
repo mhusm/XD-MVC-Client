@@ -47,8 +47,8 @@
                 this.onServerReady();
             } else { // not yet connected to server, wait for the connection event
                 XDmvc.XDd2d.on("XDserverReady", this.onServerReady.bind(this));
-                XDmvc.XDd2d.on("XDunavailable", this.onDeviceUnavailable.bind(this));
             }
+            XDmvc.XDd2d.on("XDunavailable", this.onDeviceUnavailable.bind(this));
         },
         onServerReady: function(){
             var connect = getQueryParams(window.location.search).connect;

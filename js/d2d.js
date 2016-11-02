@@ -110,7 +110,7 @@ XDd2d.prototype.usePeerToPeer = function usePeerToPeer(remoteId) {
 };
 
 XDd2d.prototype.supportsPeerJS = function() {
-    return DetectRTC.isWebRTCSupported && !DetectRTC.browser.isFirefox;
+    return DetectRTC.isWebRTCSupported && !DetectRTC.browser.isFirefox && !DetectRTC.browser.isSafari;
 };
 
 XDd2d.prototype.configure = function configure (deviceId, host, portPeer, portSocketIo, ajaxPort, iceServers) {

@@ -83,7 +83,7 @@ Define the roles of the system. Roles can be preselected.
 </xdmvc-roles>
 ```
 
-Roles can be add and removed to the current device dynamically. For example, in an event handler.
+Roles can be added and removed to the current device dynamically. For example, in an event handler.
 ```javascript
 albumClicked: function() {
     this.$.roles.removeRole('albums');
@@ -140,5 +140,5 @@ This will load the code and run the associated scripts, but not show the element
 ```
 
 With version 1.0 expressions in data binding were removed from Polymer. If you want more complex rules for UI distribution, you need to use computed bindings.
-Have a look at the [gallery](../Examples/Gallery/readme.md) for some examples.
+Have a look at the [gallery](https://github.com/mhusm/XD-Gallery) for some examples.
 

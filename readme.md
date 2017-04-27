@@ -30,7 +30,7 @@ If `reconnect` is set, the device will automatically try to reconnect to previou
 ### Specifying objects for synchronisation.
 Each object must have an identifier (here gallery, cursors).
 Only objects and arrays can be synchronised.
-If you want to synchronise atomic values such as strings or integers warp them in an object.
+If you want to synchronise atomic values such as strings or integers wrap them in an object.
 Define your objects as properties in Polymer.
 ```javascript
 properties: {

@@ -109,7 +109,7 @@ Similarly to the roles, you can query the devices. Add the devices element to yo
 ```
 
 Query the current device and connected devices. Currently there are four device types: small, medium, large, and xlarge.
-The categorisation of the devices depends on device independent pixels at the moment.
+The categorisation of the devices depends on [CSS reference pixels](https://www.w3.org/TR/css3-values/#reference-pixel) at the moment.
 Unfortunately, it is not possible to detect physical screen size. We plan to support capabilities such as touch in the future.
 ```javascript
 if (this.devices.thisDevice.type === "small" && this.devices.othersDevices.large > 0) {
